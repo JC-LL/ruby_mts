@@ -3,7 +3,7 @@
 # Otherwise, the eval_uated class will be prefixed
 # with the module itself
 # ......................................................
+require_relative '../ruby_mts'
 def evaluate simfile
-  rcode=IO.read(simfile)
-  eval(rcode)
+  eval IO.read(simfile)
 end

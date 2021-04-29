@@ -1,4 +1,4 @@
-require "../lib/ruby_mts/actors_model"
+require "ruby_mts"
 
 class Sensor < MTS::Actor
   output :o1

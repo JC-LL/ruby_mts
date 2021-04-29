@@ -3,10 +3,11 @@ require_relative "evaluate"
 module MTS
 
   class Simulator
+
+    attr_accessor :options
     attr_accessor :system
 
-    def initialize
-      puts "MTS simulator".center(80,'=')
+    def initialize options={}
       @stop_condition={}
     end
 
@@ -15,17 +16,16 @@ module MTS
       @system=evaluate(simfile)
     end
 
-    def simulate system,max_steps=nil
-      @system=system
-      puts "=> simulating #{system.name}"
+    def simulate max_steps=nil
+      puts "=> simulating #{system.name} !"
       puts " - nb of actors = #{actors.size}"
-      actors.each{|name,actor| actor.init}
-      actors.each{|name,actor| actor.start}
+      @old_status||=Array.new(actors.size){-1}
+      actors.each{|name,actor| actor.init_}
+      actors.each{|name,actor| actor.start_}
       running=not_stop?(max_steps)
       while running
         runnables.each do |actor|
           state=actor.step
-          puts "state #{actor.name} ".ljust(15)+": #{state}"
         end
         running = not_stop?(max_steps)
       end
@@ -58,8 +58,10 @@ module MTS
     # - max steps reached for one of the actor (rough idea of #transactions to observe)
     # OR
     # - actors stalled, based on their internal local time, that is stalled
+    # OR
+    # - all actors ENDED
     def stop?(max_steps)
-      stop_state? or max_step_reached?(max_steps) or stalled?
+      stop_state? or max_step_reached?(max_steps) or all_ended? #or stalled?
     end
 
     def not_stop? max_steps
@@ -68,7 +70,7 @@ module MTS
 
     def max_step_reached?(max_to_reach)
       max_steps=actors.values.collect{|actor| actor.executed_steps}.max
-      ret=max_step_reached=(max_to_reach && max_steps >= max_to_reach)
+      ret=max_step_reached=(max_to_reach && max_to_reach > 0 && max_steps >= max_to_reach)
       puts "max steps #{max_to_reach} reached " if ret
       ret
     end
@@ -81,6 +83,10 @@ module MTS
       end
       @old_status=status
       return false
+    end
+
+    def all_ended?
+      runnables.empty?
     end
 
     def stop_state?
