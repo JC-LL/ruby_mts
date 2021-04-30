@@ -25,7 +25,7 @@ module MTS
       running=not_stop?(max_steps)
       while running
         runnables.each do |actor|
-          state=actor.step
+          actor.step
         end
         running = not_stop?(max_steps)
       end
@@ -34,10 +34,15 @@ module MTS
 
     def dump_logs
       puts "==> dumping logs..."
+      all=File.open("all.log",'w')
       actors.each do |name,actor|
         filename="#{name}.log"
         puts "   -file #{filename}"
         File.open(filename,'w'){|f| f.puts actor.log}
+        all.puts actor.name.center(40,'=')
+        actor.log[:state].each do |ts,state|
+          all.puts "#{ts} : #{state}"
+        end
       end
     end
 
@@ -48,7 +53,7 @@ module MTS
     end
 
     def runnables
-      actors.values.reject{|a| a.state==:ENDED}
+      actors.values.reject{|a| a.state==:ended}
     end
 
     # stop condition will be true if :
